@@ -1,0 +1,5 @@
+queenslaw-people:
+  js:
+    js/jquery.queenslaw-people.js: {}
+  dependencies:
+    - core/jquery

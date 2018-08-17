@@ -1,0 +1,122 @@
+<?php
+
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\taxonomy\Entity\Term;
+
+/**
+ * Implements hook_page_attachments_alter().
+ *
+ * Add CSS rules for the colours per person type.
+ */
+function queenslaw_people_page_attachments_alter(array &$page) {
+  $css = '';
+  if ($types = _queenslaw_people_types()) {
+    foreach ($types as $tid => $data) {
+      if (isset($data['color']) && ($data['color'])) {
+        $css .= <<<EOC
+#views-exposed-form-people-page .form-item-person-type-{$tid} label:before {
+  border-color: {$data['color']};
+}
+#views-exposed-form-people-page .form-item-person-type-{$tid}.active label:before {
+  background-color: {$data['color']};
+}
+EOC;
+      }
+    }
+  }
+  if ($css) {
+    $page['#attached']['html_head'][] = [
+      [
+        '#tag' => 'style',
+        '#value' => $css,
+      ],
+      'queenslaw-people',
+    ];
+  }
+}
+/**
+ * Implements hook_form_FORM_ID_alter().
+ *
+ * Add the person type filter to the Views exposed people filter.
+ */
+function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
+  // $form_id is generic ("views_exposed_form"), but $form['#id'] actually identifies the
+  // form, so check that.
+  if ($form['#id'] == 'views-exposed-form-people-page') {
+    if ($types = _queenslaw_people_types()) {
+      $options = [];
+      foreach ($types as $tid => $data) $options[$tid] = $data['name'];
+      $form['#attached']['library'][] = 'queenslaw_people/queenslaw-people';
+      $form['person_type'] = [
+        '#type' => 'checkboxes',
+        '#multiple' => TRUE,
+        '#options' => $options,
+        '#weight' => 999,
+      ];
+    }
+  }
+}
+/**
+ * Return person type data;
+ */
+function _queenslaw_people_types() {
+  $types = [];
+  if ($terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree('person_types', 0, NULL, TRUE)) {
+    $types = [];
+    foreach ($terms as $term) {
+      $tid = $term->id();
+      $types[$tid] = [
+        'name' => $term->getName(),
+      ];
+      if ($term->hasField('field_color')) {
+        if ($color_data = $term->get('field_color')->getValue()) {
+          if (isset($color_data[0]['color'])) $types[$tid]['color'] = $color_data[0]['color'];
+        }
+      }
+    }
+  }
+  return $types;
+}
+/**
+ * Build a value for the computed field used as a filter on the directory page.
+ *
+ */
+function computed_field_field_person_filter_compute($entity_type_manager, $entity, $fields, $delta) {
+  $values = [];
+  $source_fields = [
+    'text' => [
+      'body',
+      'field_achievement',
+      'field_degree',
+      'field_designationn',
+      'field_first_name',
+      'field_home_organization',
+      'field_home_organization_title',
+      'field_last_name',
+      'field_title',
+    ],
+    'taxonomy' => [
+      'field_office_clinic_or_program',
+      'field_person_type',
+      'field_teaching_and_research',
+      'field_team_or_committee',
+    ],
+  ];
+  $tids = [];
+  foreach ($source_fields as $field_type => $field_names) {
+    foreach ($field_names as $field_name) {
+      if ($entity->hasField($field_name)) {
+        foreach ($entity->get($field_name)->getValue() as $field_value) {
+          if (($field_type == 'text') && (isset($field_value['value']))) $values[] = $field_value['value'];
+          elseif (($field_type == 'taxonomy') && (isset($field_value['target_id']))) $tids[] = $field_value['target_id'];
+        }
+      }
+    }
+  }
+  if (!empty($tids)) {
+    $terms = Term::loadMultiple($tids);
+    foreach ($terms as $term) $values[] = $term->getName();
+  }
+  $value = implode(' ', $values);
+  return $value;
+}

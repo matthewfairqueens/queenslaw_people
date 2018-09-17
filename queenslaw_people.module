@@ -29,10 +29,10 @@ function queenslaw_people_page_attachments_alter(array &$page) {
     foreach ($types as $tid => $data) {
       if (isset($data['color']) && ($data['color'])) {
         $css .= <<<EOC
-#views-exposed-form-people-page .form-item-person-type-{$tid} label:before {
+.views-exposed-form .form-item-person-type-{$tid} label:before {
   border-color: {$data['color']};
 }
-#views-exposed-form-people-page .form-item-person-type-{$tid}.active label:before {
+.views-exposed-form .form-item-person-type-{$tid}.active label:before {
   background-color: {$data['color']};
 }
 EOC;
@@ -59,7 +59,7 @@ function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateI
   // form, so check that.
   $alter_forms = [
     'views-exposed-form-people-page' => 'directory',
-    'views-exposed-form-people-faculty-block' => 'directory',
+    'views-exposed-form-people-faculty-block' => 'faculty',
   ];
   if (isset($form['#id']) && (array_key_exists($form['#id'], $alter_forms))) {
     $condition = $alter_forms[$form['#id']];

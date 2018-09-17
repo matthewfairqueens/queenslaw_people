@@ -1,6 +1,6 @@
 (function ($) {
   $(document).ready(function(){
-    $('body.landing-page-directory .view-people').wrap('<div class="people-dynamic"/>');
+    $('body.landing-page-directory .view-people, #block-views-block-people-faculty-block .view-people').wrap('<div class="people-dynamic"/>');
     initializePeopleDynamic();
   });
   $(document).ajaxComplete(function(){

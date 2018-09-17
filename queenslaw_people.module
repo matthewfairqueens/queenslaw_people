@@ -43,7 +43,7 @@ function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateI
   // $form_id is generic ("views_exposed_form"), but $form['#id'] actually identifies the
   // form, so check that.
   if ($form['#id'] == 'views-exposed-form-people-page') {
-    if ($types = _queenslaw_people_types()) {
+    if ($types = _queenslaw_people_types('directory')) {
       $options = [];
       foreach ($types as $tid => $data) $options[$tid] = $data['name'];
       $form['#attached']['library'][] = 'queenslaw_people/queenslaw-people';
@@ -59,18 +59,26 @@ function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateI
 /**
  * Return person type data;
  */
-function _queenslaw_people_types() {
+function _queenslaw_people_types($condition = FALSE) {
   $types = [];
   if ($terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree('person_types', 0, NULL, TRUE)) {
     $types = [];
     foreach ($terms as $term) {
-      $tid = $term->id();
-      $types[$tid] = [
-        'name' => $term->getName(),
-      ];
-      if ($term->hasField('field_color')) {
-        if ($color_data = $term->get('field_color')->getValue()) {
-          if (isset($color_data[0]['color'])) $types[$tid]['color'] = $color_data[0]['color'];
+      $include = FALSE;
+      if ($condition) {
+        $condition_field = "field_{$condition}";
+        if ($term->hasField($condition_field)) {
+          if (($condition = $term->get($condition_field)->getString()) && ($condition == 1)) $include = TRUE;
+        }
+      }
+      else $include = TRUE;
+      if ($include) {
+        $tid = $term->id();
+        $types[$tid] = [
+          'name' => $term->getName(),
+        ];
+        if ($term->hasField('field_color')) {
+          if ($color = $term->get('field_color')->getString()) $types[$tid]['color'] = $color;
         }
       }
     }

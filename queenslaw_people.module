@@ -2,7 +2,22 @@
 
 use Drupal\Core\Form\FormStateInterface;
 use Drupal\taxonomy\Entity\Term;
+use Drupal\views\ViewExecutable;
 
+/**
+ * Implements hook_views_pre_render().
+ *
+ * Remove duplicates caused by the "person type" relationship.
+ */
+function queenslaw_people_views_pre_render(ViewExecutable $view) {
+  if ($view->id() == 'people') {
+    $filtered_nids = [];
+    foreach ($view->result as $key => $row) {
+      if (in_array($row->nid, $filtered_nids)) unset($view->result[$key]);
+      else $filtered_nids[] = $row->nid;
+    }
+  }
+}
 /**
  * Implements hook_page_attachments_alter().
  *

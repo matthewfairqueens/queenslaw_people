@@ -62,13 +62,12 @@ function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateI
 function _queenslaw_people_types($condition = FALSE) {
   $types = [];
   if ($terms = \Drupal::entityManager()->getStorage('taxonomy_term')->loadTree('person_types', 0, NULL, TRUE)) {
-    $types = [];
     foreach ($terms as $term) {
       $include = FALSE;
       if ($condition) {
         $condition_field = "field_{$condition}";
         if ($term->hasField($condition_field)) {
-          if (($condition = $term->get($condition_field)->getString()) && ($condition == 1)) $include = TRUE;
+          if (($condition_value = $term->get($condition_field)->getString()) && ($condition_value == 1)) $include = TRUE;
         }
       }
       else $include = TRUE;

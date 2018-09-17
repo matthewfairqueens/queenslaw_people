@@ -57,8 +57,13 @@ EOC;
 function queenslaw_people_form_views_exposed_form_alter(array &$form, FormStateInterface $form_state, $form_id) {
   // $form_id is generic ("views_exposed_form"), but $form['#id'] actually identifies the
   // form, so check that.
-  if ($form['#id'] == 'views-exposed-form-people-page') {
-    if ($types = _queenslaw_people_types('directory')) {
+  $alter_forms = [
+    'views-exposed-form-people-page' => 'directory',
+    'views-exposed-form-people-faculty-block' => 'faculty',
+  ];
+  if (isset($form['#id']) && (array_key_exists($form['#id'], $alter_forms))) {
+    $condition = $alter_forms[$form['#id']];
+    if ($types = _queenslaw_people_types($condition)) {
       $options = [];
       foreach ($types as $tid => $data) $options[$tid] = $data['name'];
       $form['#attached']['library'][] = 'queenslaw_people/queenslaw-people';
